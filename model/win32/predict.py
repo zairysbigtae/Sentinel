@@ -9,6 +9,7 @@ import threading
 from colorama import Fore, Style
 import typer
 from enum import Enum
+import os
 
 app = typer.Typer()
 
@@ -21,7 +22,7 @@ def calculate_entropy(data):
     probs = probs[probs > 0]
     return scipy_entropy(probs, base=2)
 
-def extract_features_from_file(filepath: str):
+def extract_features_from_file_win32(filepath: str):
     binary: lief.Binary = lief.parse(filepath)
     with open(filepath, "rb") as f:
         data = f.read()
@@ -38,8 +39,6 @@ def extract_features_from_file(filepath: str):
         calculate_entropy(data),
         len(numstrings),
     ]
-    print("Sorry, other platforms aren't supported yet. Only Windows is")
-    sys.exit(1)
 
 def checking_placeholder(filepath, done_predicting):
     while not done_predicting:
@@ -48,8 +47,10 @@ def checking_placeholder(filepath, done_predicting):
             time.sleep(0.2)
 
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+default_model_dir = os.path.join(script_dir, "model.json")
 @app.command()
-def predict_malware(filepath: str = typer.Option(), model_path: str = typer.Option(), colorblindness: Colorblindness = typer.Option(None)):
+def predict_malware(filepath: str = typer.Option(), model_path: str = typer.Option(default_model_dir), colorblindness: Colorblindness = typer.Option(None)):
     done_predicting = False
     thread = threading.Thread(target=checking_placeholder, args=(filepath, done_predicting), daemon=True)
     thread.start()
@@ -57,7 +58,7 @@ def predict_malware(filepath: str = typer.Option(), model_path: str = typer.Opti
     model = xgb.XGBClassifier()
     model.load_model(model_path)
 
-    features = extract_features_from_file(filepath)
+    features = extract_features_from_file_win32(filepath)
     features = np.array(features).reshape(1, -1)
     pred = model.predict(features)
 
