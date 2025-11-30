@@ -3,7 +3,17 @@ name = "sentinel"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "sentinel_src"
+path = "src/main.rs"
+
 [dependencies]
+rust_lib = { path = "./rust_lib/" }
+
+[build-dependencies]
+bindgen = "0.72.1"
+cc = "1.2.48"
+clang-sys = "1.8.1"
 clap = { version = "4.5.53", features = ["derive"] }
 fastbloom = "0.14.0"
 lief = "0.17.1"
