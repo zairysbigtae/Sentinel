@@ -43,7 +43,7 @@ def extract_features_from_file_win32(filepath: str):
 def checking_placeholder(filepath, done_predicting):
     while not done_predicting:
         for i in range(1,4):
-            print(f"\rChecking if {filepath} is a malware{"."*i}", end="", flush=True)
+            print(f"\rChecking if {filepath} is a malware{'.'*i}", end="", flush=True)
             time.sleep(0.2)
 
 

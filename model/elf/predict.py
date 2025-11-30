@@ -17,13 +17,12 @@ app = typer.Typer()
 class Colorblindness(str, Enum):
     protanopia = "protanopia"
 
-
 def calculate_entropy(data):
   counts = np.bincount(np.frombuffer(data, dtype=np.uint8), minlength=256)
   probs = counts / len(data)
   probs = probs[probs > 0]
   return scipy_entropy(probs, base=2)
-  
+
 def calculate_byte_entropy(data, block_size=1024):
   entropies = []
   for i in range(0, len(data), block_size):
@@ -83,7 +82,7 @@ def extract_features_from_file_elf(filepath: str):
 def checking_placeholder(filepath, done_predicting):
     while not done_predicting:
         for i in range(1,4):
-            print(f"\rChecking if {filepath} is a malware{"."*i}", end="", flush=True)
+            print(f"\rChecking if {filepath} is a malware{'.'*i}", end="", flush=True)
             time.sleep(0.2)
 
 
@@ -102,7 +101,7 @@ def predict_malware(filepath: str = typer.Option(), model_path: str = typer.Opti
     features = np.array(features).reshape(1, -1)
     pred = model.predict(features)
 
-    done_predicting = True
+    # done_predicting = True
     print()
     is_malware = True if pred[0] else False
     red = Fore.YELLOW if colorblindness == Colorblindness.protanopia else Fore.RED
