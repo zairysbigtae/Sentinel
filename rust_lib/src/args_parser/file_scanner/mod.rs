@@ -9,7 +9,7 @@ use std::path::Path;
 use std::{env::home_dir, io::{self, Read}, path::PathBuf, process::Command};
 
 unsafe extern "C" {
-    fn predict_malware(filepath: *const c_char, model_path: *const c_char);
+    fn predict_malware_elf(filepath: *const c_char, model_path: *const c_char);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -126,7 +126,7 @@ impl FileScanner {
                 Some(FileSignature::Elf) => {
                     let c_model_path = CString::new("model/elf/model.ubj").unwrap();
                     unsafe {
-                        predict_malware(
+                        predict_malware_elf(
                         c_file_path.as_ptr(),
                         c_model_path.as_ptr(),
                         );

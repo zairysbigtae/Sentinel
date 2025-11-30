@@ -162,7 +162,7 @@ float* extract_features_from_file_elf(char* filepath) {
     return result;
 }
 
-void predict_malware(char* filepath, char* model_path) {
+void predict_malware_elf(char* filepath, char* model_path) {
     BoosterHandle booster;
     XGBoosterCreate(NULL, 0, &booster);
     XGBoosterLoadModel(booster, model_path);
