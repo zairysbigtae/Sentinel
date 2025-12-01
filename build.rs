@@ -27,6 +27,10 @@ fn main() {
     // link stdc++
     println!("cargo:rustc-link-lib=dylib=stdc++");
 
+    // link lief_wrapper (my custom wrapper)
+    println!("cargo:rustc-link-search=native=c_code/exe/");
+    println!("cargo:rustc-link-lib=dylib=lief_wrapper");
+
     let bindings = bindgen::Builder::default()
         .header("./wrapper.h")
         .generate()

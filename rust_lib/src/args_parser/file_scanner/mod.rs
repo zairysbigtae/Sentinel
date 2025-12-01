@@ -7,6 +7,7 @@ use std::os::raw::c_char;
 use std::path::Path;
 use std::{env::home_dir, io::{self, Read}, path::PathBuf};
 
+#[link(name = "lief_wrapper")]
 unsafe extern "C" {
     fn predict_malware_elf(filepath: *const c_char, model_path: *const c_char);
     fn predict_malware_pe(filepath: *const c_char, model_path: *const c_char);

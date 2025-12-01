@@ -10,6 +10,10 @@
 #include <xgboost/c_api.h>
 #include "../helper.h"
 
+bool lief_pe_has_signatures(Pe_Binary_t *pe_binary);
+bool lief_pe_has_imports(Pe_Binary_t *pe_binary);
+bool lief_pe_has_sections(Pe_Binary_t *pe_binary);
+
 typedef unsigned int uint;
 
 typedef struct {
@@ -148,9 +152,9 @@ static float* extract_features_from_file_pe(char* filepath) {
     int hist_len = 256; // allocated 256 bins in histogram function
 
     result[result_size++] = (float)bytes_read;
-    result[result_size++] = binary->imports != NULL;
-    result[result_size++] = true;
-    result[result_size++] = binary->sections != NULL;
+    result[result_size++] = lief_pe_has_imports(binary);
+    result[result_size++] = lief_pe_has_signatures(binary);
+    result[result_size++] = lief_pe_has_sections(binary);
     result[result_size++] = mean(hist, hist_len);
     result[result_size++] = std(hist, hist_len);
     result[result_size++] = max(hist, hist_len);
