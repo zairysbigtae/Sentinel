@@ -16,6 +16,9 @@ jobs:
         steps:
         - uses: actions/checkout@v3
 
+        - name: clean old targets
+          run: cargo clean
+
         - name: setup rust
           uses: actions-rs/toolchain@v1
           with:
