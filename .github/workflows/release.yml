@@ -43,7 +43,7 @@ jobs:
             # Build LIEF
             mkdir build && cd build
             cmake -DCMAKE_INSTALL_PREFIX=$HOME/lief ..
-            cmake --build . --target install
+            cmake --build . --target install -j$(nproc)
 
             # Export paths for CI
             echo "export LIEF_ROOT=$HOME/lief" >> $GITHUB_ENV
