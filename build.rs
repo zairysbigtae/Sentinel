@@ -11,7 +11,7 @@ fn main() {
         .compile("predict");
 
     // rerun cuz i dont wanna call `cargo clean` everytime like a maniac
-    println!("cargo:rerun-if-changed=c_code/elf/predict.c");
+    println!("cargo:rerun-if-changed=c_code");
 
     // link rust to the library
     println!("cargo:rustc-link-search=native={}", std::env::var("OUT_DIR").unwrap());
