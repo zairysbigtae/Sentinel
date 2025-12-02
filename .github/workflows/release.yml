@@ -67,7 +67,7 @@ jobs:
           run: mkdir -p artifacts
 
         - name: copy binary
-          run: cp target/${{ matrix.target}}/release/* artifacts
+          run: cp target/${{ matrix.target}}/release/sentinel_src artifacts
 
         - name: generate sha256 checksums
           run: |
