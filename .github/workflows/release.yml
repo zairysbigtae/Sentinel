@@ -106,7 +106,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_WORKS=TRUE \
           -DCMAKE_EXE_LINKER_FLAGS="-lws2_32" \
           -DCMAKE_SHARED_LINKER_FLAGS="-lws2_32" \
-          -DCMAKE_MODULE_LINKER_FLAGS="-lws2_32" \
+          -DCMAKE_MODULE_LINKER_FLAGS="-lws2_32"
         cmake --build . --target install -j$(nproc)
       shell: bash
 
