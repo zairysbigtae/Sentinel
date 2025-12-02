@@ -79,6 +79,6 @@ jobs:
         - name: upload release asset
           uses: softprops/action-gh-release@v1
           with:
-            files: artifiacts/*
+            files: artifacts/*
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
