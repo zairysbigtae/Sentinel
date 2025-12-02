@@ -105,7 +105,7 @@ jobs:
         fi
         ${{ matrix.cc }} -fPIC -shared \
           -o c_code/exe/liblief_wrapper.$LIB_EXT \
-          c_code/exe/lief_custom_wrapper.c \
+          c_code/exe/lief_custom_wrapper.cpp \
           -I LIEF/build/install/include \
           -L LIEF/build/install/lib \
           -lLIEF
