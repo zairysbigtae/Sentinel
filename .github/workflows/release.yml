@@ -86,10 +86,24 @@ jobs:
         git clone https://github.com/lief-project/LIEF.git
         cd LIEF
         mkdir build && cd build
+
+        # Set cross-compilation flags
+        TARGET_ARCH=$(echo "${{ matrix.target }}" | cut -d- -f1)
+        if [[ "${{ matrix.target }}" == *"windows"* ]]; then
+            SYSTEM_NAME="Windows"
+        else
+            SYSTEM_NAME="Linux"
+        fi
+
         cmake .. \
+          -DLIEF_PYTHON_BINDING=OFF \
           -DCMAKE_C_COMPILER=${{ matrix.cc }} \
           -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
-          -DCMAKE_INSTALL_PREFIX=$PWD/install
+          -DCMAKE_INSTALL_PREFIX=$PWD/install \
+          -DCMAKE_SYSTEM_NAME=$SYSTEM_NAME \
+          -DCMAKE_SYSTEM_PROCESSOR=$TARGET_ARCH \
+          -DCMAKE_C_COMPILER_WORKS=TRUE \
+          -DCMAKE_CXX_COMPILER_WORKS=TRUE 
         cmake --build . --target install -j$(nproc)
       shell: bash
 
