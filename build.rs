@@ -4,10 +4,19 @@ extern crate bindgen;
 extern crate cc;
 
 fn main() {
+    // Get LIEF paths from environment or use defaults
+    let lief_lib = std::env::var("LIEF_LIB_PATH")
+        .unwrap_or_else(|_| "/usr/lib/".to_string());
+    let lief_include = std::env::var("LIEF_INCLUDE_PATH")
+        .unwrap_or_else(|_| "/usr/include/".to_string());
+    let lief_wrapper_path = std::env::var("LIEF_WRAPPER_PATH")
+        .unwrap_or_else(|_| "c_code/exe/".to_string());
+
     cc::Build::new()
         .file("c_code/elf/predict.c")
         .file("c_code/exe/predict.c")
         .file("c_code/helper.c")
+        .include(&lief_include)
         .compile("predict");
 
     // rerun cuz i dont wanna call `cargo clean` everytime like a maniac
@@ -22,13 +31,13 @@ fn main() {
     println!("cargo:rustc-link-lib=dylib=xgboost");
 
     // link LIEF
-    println!("cargo:rustc-link-lib=dylib=LIEF");
+    println!("cargo:rustc-link-lib=dylib={lief_lib}");
 
     // link stdc++
     println!("cargo:rustc-link-lib=dylib=stdc++");
 
     // link lief_wrapper (my custom wrapper)
-    println!("cargo:rustc-link-search=native=c_code/exe/");
+    println!("cargo:rustc-link-search=native={lief_wrapper_path}");
     println!("cargo:rustc-link-lib=dylib=lief_wrapper");
 
     let bindings = bindgen::Builder::default()
