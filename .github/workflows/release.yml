@@ -63,7 +63,8 @@ jobs:
           -DBUILD_SHARED_LIB=ON \
           -DCMAKE_C_COMPILER=${{ matrix.cc }} \
           -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
-          -DCMAKE_INSTALL_PREFIX=$PWD/install
+          -DCMAKE_INSTALL_PREFIX=$PWD/install \
+          -DXGBOOST_USE_OPENMP=OFF
         cmake --build . --target install -j$(nproc)
       shell: bash
 
