@@ -1,86 +1,127 @@
 name: Release
 
 on:
-    push:
-        tags:
-            - 'v*.*.*'
+  push:
+    tags:
+      - 'v*.*.*'
 
 jobs:
-    release:
-        permissions:
-            contents: write
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                # linux and windows targets
-                target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-gnu, aarch64-pc-windows-gnu]
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
 
-        steps:
-        - uses: actions/checkout@v3
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - aarch64-pc-windows-gnu
 
-        - name: install system deps
-          run: |
-            sudo dpkg --add-architecture i386
-            sudo apt-get update
-            sudo apt-get install build-essential -y
-            sudo apt-get install libc6-dev -y
-            sudo apt-get install libc6-dev:i386 gcc-multilib g++-multilib -y
-            sudo apt-get install -y mingw-w64
-            sudo apt-get install -y gcc-aarch64-linux-gnu
+        include:
+          - target: x86_64-unknown-linux-gnu
+            cc: gcc
+            cxx: g++
+          - target: aarch64-unknown-linux-gnu
+            cc: aarch64-linux-gnu-gcc
+            cxx: aarch64-linux-gnu-g++
+          - target: x86_64-pc-windows-gnu
+            cc: x86_64-w64-mingw32-gcc
+            cxx: x86_64-w64-mingw32-g++
+          - target: aarch64-pc-windows-gnu
+            cc: aarch64-w64-mingw32-gcc
+            cxx: aarch64-w64-mingw32-g++
 
-        - name: download and build xgboost c lib
-          run: |
-            git clone --recursive https://github.com/dmlc/xgboost.git
-            cd xgboost
-            mkdir build && cd build
-            cmake -S .. -B . -DUSE_CUDA=OFF -DBUILD_SHARED_LIB=ON -DCMAKE_INSTALL_PREFIX=/usr/
-            sudo cmake --build . --target install -j$(nproc)
+    steps:
+    - uses: actions/checkout@v3
 
-        - name: download and build lief c lib
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y cmake g++ wget unzip
+    - name: Install cross compilers
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libc6-dev libc6-dev:i386 gcc-multilib g++-multilib \
+          mingw-w64 \
+          gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-            # Clone LIEF
-            git clone https://github.com/lief-project/LIEF.git
-            cd LIEF
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
 
-            # Build LIEF
-            mkdir build && cd build
-            cmake -S .. -B . -DCMAKE_INSTALL_PREFIX=/usr/
-            sudo cmake --build . --target install -j$(nproc)
+    - name: Add Rust target
+      run: rustup target add ${{ matrix.target }}
 
-        - name: clean old targets
-          run: cargo clean
+    # Build XGBoost per target
+    - name: Build XGBoost (C library)
+      run: |
+        git clone --recursive https://github.com/dmlc/xgboost.git
+        cd xgboost
+        mkdir build && cd build
+        cmake .. \
+          -DUSE_CUDA=OFF \
+          -DBUILD_SHARED_LIB=ON \
+          -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+          -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.target }} \
+          -DCMAKE_INSTALL_PREFIX=$PWD/install
+        cmake --build . --target install -j$(nproc)
+      shell: bash
 
-        - name: setup rust
-          uses: actions-rs/toolchain@v1
-          with:
-            toolchain: stable
-            override: true
+    # Build LIEF per target
+    - name: Build LIEF
+      run: |
+        git clone https://github.com/lief-project/LIEF.git
+        cd LIEF
+        mkdir build && cd build
+        cmake .. \
+          -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+          -DCMAKE_INSTALL_PREFIX=$PWD/install
+        cmake --build . --target install -j$(nproc)
 
-        - name: install deps
-          run: rustup target add ${{ matrix.target }}
+    # Build custom C wrapper (LIEF wrapper)
+    - name: Build lief_wrapper
+      run: |
+        mkdir -p c_build
+        ${{ matrix.cc }} -fPIC -shared \
+          -o c_code/exe/liblief_wrapper.so \
+          c_code/lief_wrapper.c \
+          -I LIEF/build/install/include \
+          -L LIEF/build/install/lib \
+          -lLIEF
+      shell: bash
 
-        - name: build
-          run: cargo build --release --target ${{ matrix.target }}
+    - name: Clean Rust targets
+      run: cargo clean
 
-        - name: make artifiacts dir
-          run: mkdir -p artifacts
+    - name: Build Rust project
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+        LIEF_WRAPPER_PATH: ${{ github.workspace }}/c_build
+      run: cargo build --release --target ${{ matrix.target }}
 
-        - name: copy binary
-          run: cp target/${{ matrix.target}}/release/sentinel_src artifacts
+    - name: Prepare artifacts
+      run: mkdir -p artifacts
 
-        - name: generate sha256 checksums
-          run: |
-            cd artifacts
-            for f in *; do
-                sha256sum "$f" > "$f.sha256"
-            done
+    - name: Copy binary
+      run: cp target/${{ matrix.target }}/release/sentinel_src artifacts
 
-        - name: upload release asset
-          uses: softprops/action-gh-release@v1
-          with:
-            files: artifacts/*
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Generate SHA256 checksums
+      run: |
+        cd artifacts
+        for f in *; do
+          sha256sum "$f" > "$f.sha256"
+        done
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: artifacts/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
