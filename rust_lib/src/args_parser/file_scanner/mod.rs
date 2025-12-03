@@ -149,7 +149,11 @@ pub enum FileSignature {
 fn check_file_signature(file_path: &Path) -> Option<FileSignature> {
     let mut f = File::open(file_path).unwrap();
     let mut magic = [0u8; 4];
-    f.read_exact(&mut magic).unwrap();
+    let read_amount = f.read(&mut magic).unwrap();
+
+    if read_amount == 0 {
+        return None;
+    }
     // ELF magic = 0x7F 'E' 'L' 'F'
     if magic == [0x7F, b'E', b'L', b'F'] {
         return Some(FileSignature::Elf);

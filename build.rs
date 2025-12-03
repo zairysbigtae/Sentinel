@@ -45,6 +45,7 @@ fn main() {
     println!("cargo:rustc-link-lib=dylib=stdc++");
 
     // link lief_wrapper (my custom wrapper)
+    println!("cargo:rustc-link-arg=-Wl,-rpath,{lief_wrapper_path}");
     println!("cargo:rustc-link-search=native={lief_wrapper_path}");
     println!("cargo:rustc-link-lib=dylib=lief_wrapper");
 
