@@ -1,1 +1,4 @@
 /target
+/Cargo.lock
+rust_lib/target
+rust_lib/Cargo.lock
