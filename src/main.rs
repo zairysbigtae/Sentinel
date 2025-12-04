@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{io, panic, process};
 use clap::Parser;
 use colored::Colorize;
@@ -42,7 +43,11 @@ fn main() -> io::Result<()> {
         }
         Some(CheckUnauthorizedChanges { .. }) => {
             let mut unauthorized_changes_scanner = UnauthorizedChangesScanner::from_db(conn);
-            unauthorized_changes_scanner.scan_unauthorized_checks().unwrap();
+
+            loop {
+                unauthorized_changes_scanner.scan_unauthorized_checks().unwrap();
+                std::thread::sleep(Duration::from_secs(10));
+            }
         }
         None => {
             panic!("Please enter a command")

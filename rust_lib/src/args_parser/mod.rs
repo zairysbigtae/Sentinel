@@ -40,7 +40,7 @@ pub enum Commands {
         #[arg(short, long)]
         dir: Option<PathBuf>,
 
-        #[arg(short, long)]
+        #[arg(long)]
         show_pred: bool,
 
         #[command(subcommand)]
