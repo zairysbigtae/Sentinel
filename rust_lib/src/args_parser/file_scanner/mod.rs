@@ -1,16 +1,18 @@
 use crate::args_parser::Commands::ScanDir;
 use crate::args_parser::Args;
 use clap::Subcommand;
+use goblin::Object;
 use std::ffi::CString;
-use std::fs::File;
+use std::fs::{self, File};
 use std::os::raw::c_char;
+use std::panic;
 use std::path::Path;
 use std::{env::home_dir, io::{self, Read}, path::PathBuf};
 
 #[link(name = "lief_wrapper")]
 unsafe extern "C" {
-    fn predict_malware_elf(filepath: *const c_char, model_path: *const c_char) -> bool;
-    fn predict_malware_pe(filepath: *const c_char, model_path: *const c_char) -> bool;
+    fn predict_malware_elf(filepath: *const c_char, model_path: *const c_char, show_pred: bool) -> bool;
+    fn predict_malware_pe(filepath: *const c_char, model_path: *const c_char, show_pred: bool) -> bool;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -74,6 +76,7 @@ pub enum FileCommands {
 pub struct FileScanner {
     args: Args,
     file: PathBuf,
+    show_pred: bool,
     response_aggressiveness: Aggressiveness,
     safety_aggressiveness: Aggressiveness,
 }
@@ -81,14 +84,18 @@ pub struct FileScanner {
 impl FileScanner {
     pub fn new(args: Args) -> Self {
         let commands = args.clone().command.unwrap();
-        let file = match commands {
-            ScanDir { dir: file, .. } => file,
-            _ => panic!("How did you even get here..? Did you not use scan-dir")
-        }.unwrap_or(home_dir().expect("Couldn't get the home directory"));
+        let (file, show_pred) = match commands {
+            ScanDir { dir, show_pred, .. } => {
+                let dir = dir.unwrap_or_else(|| home_dir().expect("Couldn't get home directory"));
+                (dir, show_pred)
+            }
+            _ => panic!("How did you even get here..?")
+        };
 
         Self {
             args,
             file,
+            show_pred,
             response_aggressiveness: Aggressiveness::Normal,
             safety_aggressiveness: Aggressiveness::Normal,
         }
@@ -120,14 +127,14 @@ impl FileScanner {
                 Some(FileSignature::Exe) => {
                     let c_model_path = CString::new("model/exe/model.ubj").unwrap();
                     let is_malware = unsafe {
-                        predict_malware_pe(c_file_path.as_ptr(), c_model_path.as_ptr())
+                        predict_malware_pe(c_file_path.as_ptr(), c_model_path.as_ptr(), self.show_pred)
                     };
                     handle_malware(file_path, is_malware, &mut malwares_count);
                 }
                 Some(FileSignature::Elf) => {
                     let c_model_path = CString::new("model/elf/model.ubj").unwrap();
                     let is_malware = unsafe {
-                        predict_malware_elf( c_file_path.as_ptr(), c_model_path.as_ptr())
+                        predict_malware_elf( c_file_path.as_ptr(), c_model_path.as_ptr(), self.show_pred)
                     };
                     handle_malware(file_path, is_malware, &mut malwares_count);
                 }
@@ -148,24 +155,20 @@ pub enum FileSignature {
 }
 
 fn check_file_signature(file_path: &Path) -> Option<FileSignature> {
-    let mut f = File::open(file_path).unwrap();
-    let mut magic = [0u8; 4];
-    let read_amount = f.read(&mut magic).unwrap();
-
-    if read_amount == 0 {
-        return None;
+    let buf = fs::read(file_path).ok()?;
+    match Object::parse(&buf).ok()? {
+        Object::Elf(elf) => {
+            if !elf.is_lib {
+                Some(FileSignature::Elf)
+            } else { None }
+        }
+        Object::PE(pe) => {
+            if !pe.is_lib {
+                Some(FileSignature::Exe)
+            } else { None }
+        }
+        _ => None,
     }
-    // ELF magic = 0x7F 'E' 'L' 'F'
-    if magic == [0x7F, b'E', b'L', b'F'] {
-        return Some(FileSignature::Elf);
-    }
-
-    // EXE magic = 'M' 'Z'
-    if magic[0..2] == [b'M', b'Z'] {
-        return Some(FileSignature::Exe);
-    }
-
-    None
 }
 
 fn handle_malware<T: AsRef<Path>>(file_path: T, is_malware: bool, malwares_count: &mut usize) {

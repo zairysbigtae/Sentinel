@@ -170,7 +170,7 @@ static float* extract_features_from_file_pe(char* filepath) {
     return result;
 }
 
-bool predict_malware_pe(char* filepath, char* model_path) {
+bool predict_malware_pe(char* filepath, char* model_path, bool show_pred) {
     BoosterHandle booster;
     XGBoosterCreate(NULL, 0, &booster);
     XGBoosterLoadModel(booster, model_path);
@@ -183,7 +183,7 @@ bool predict_malware_pe(char* filepath, char* model_path) {
     // the config and 
     char const config[] =
         "{\"training\": false, \"type\": 0, "
-        "\"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": false}";
+        "\"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
     /* Shape of output prediction */
     uint64_t const* out_shape;
     /* Dimension of output prediction */
@@ -191,9 +191,14 @@ bool predict_malware_pe(char* filepath, char* model_path) {
     /* Pointer to a thread local contiguous array, assigned in prediction function. */
     float const* out_result = NULL;
     XGBoosterPredictFromDMatrix(booster, features_mat, config, &out_shape, &out_dim, &out_result);
+    // XGBoosterPredict(booster, features_mat, 0, 0, 0, &out_dim, &out_result);
 
     float pred = out_result[0];
-    bool is_malware = pred > 0.099;
+    bool is_malware = pred > 0.2;
+
+    if (show_pred == true) {
+        printf("Certainity: %2f\n", pred);
+    }
 
     XGBoosterFree(booster);
     XGDMatrixFree(features_mat);

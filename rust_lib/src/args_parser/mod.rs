@@ -40,6 +40,9 @@ pub enum Commands {
         #[arg(short, long)]
         dir: Option<PathBuf>,
 
+        #[arg(short, long)]
+        show_pred: bool,
+
         #[command(subcommand)]
         scan: Option<FileCommands>,
     },

@@ -35,6 +35,8 @@ fn main() {
 
     // rerun cuz i dont wanna call `cargo clean` everytime like a maniac
     println!("cargo:rerun-if-changed=c_code");
+    println!("cargo:rerun-if-changed=c_code/exe/predict.c");
+    println!("cargo:rerun-if-changed=c_code/elf/predict.c");
 
     // link rust to the library
     println!("cargo:rustc-link-search=native={}", out_dir.display());
