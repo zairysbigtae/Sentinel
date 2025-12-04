@@ -1,4 +1,4 @@
-BIN_PATH = target/release/sentinel_src 
+BIN_PATH = target/release/sentinel
 PREFIX = /usr/local
 
 all: $(BIN_PATH)
