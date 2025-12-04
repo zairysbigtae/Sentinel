@@ -16,6 +16,7 @@ install:
 	test -f $(PREFIX)/share/sentinel/passwd.db || touch $(PREFIX)/share/sentinel/passwd.db
 	sudo chown $(USER) $(PREFIX)/share/sentinel/passwd.db
 	sudo chmod 666 $(PREFIX)/share/sentinel/passwd.db
+	sudo chmod 777 $(PREFIX)/share/sentinel/
 
 enable-daemon:
 	set -e
