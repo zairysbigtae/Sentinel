@@ -1,0 +1,12 @@
+[Unit]
+Description=Sentinel
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/sentinel
+Restart=always
+Environment=RUST_LOG=info
+PIDFile=/run/sentinel.pid
+
+[Install]
+WantedBy=multi-user.target
