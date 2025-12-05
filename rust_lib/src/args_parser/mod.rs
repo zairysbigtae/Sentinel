@@ -1,5 +1,6 @@
 pub mod file_scanner;
 pub mod unauthorized_changes_scanner;
+pub mod process_behaviors_analyzer;
 
 use std::path::PathBuf;
 
@@ -49,5 +50,6 @@ pub enum Commands {
     CheckUnauthorizedChanges {
         #[arg(short, long)]
         path: Option<PathBuf>,
-    }
+    },
+    AnalyzeProcessBehaviors,
 }
