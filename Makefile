@@ -22,3 +22,8 @@ enable-daemon:
 	set -e
 	install -m 644 sentinel.service /etc/systemd/system/
 	systemctl daemon-reload
+	
+	sudo systemctl stop sentinel
+	sudo systemctl disable sentinel
+	sudo systemctl start sentinel
+	sudo systemctl enable sentinel

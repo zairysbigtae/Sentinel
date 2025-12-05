@@ -4,8 +4,7 @@ After=network.target
 
 [Service]
 Environment=LD_LIBRARY_PATH=/usr/local/lib/
-ExecStart=/usr/local/bin/sentinel check-unauthorized-changes
-ExecStart=/usr/local/bin/sentinel analyze-process-behaviors
+ExecStart=/bin/sh -c '/usr/local/bin/sentinel check-unauthorized-changes && /usr/local/bin/sentinel analyze-process-behaviors'
 Restart=always
 Environment=RUST_LOG=info
 PIDFile=/run/sentinel.pid
