@@ -52,8 +52,9 @@ impl ProcessBehaviorsAnalyzer {
             };
 
             let total_time = (stat2.utime + stat2.stime) - (stat1.utime + stat1.stime); // 645 + 407 = 1052 clock ticks
-            let clock_ticks_per_sec = 100; // usually 100 on Linux
-            let cpu_usage = (total_time / clock_ticks_per_sec) as f64 * 2.0 * 100.0;
+            let clock_ticks_per_sec = unsafe { libc::sysconf(libc::_SC_CLK_TCK) } as f64; // usually 100 on Linux
+            let interval_sec = 0.5;
+            let cpu_usage = (total_time as f64 / clock_ticks_per_sec as f64) / interval_sec * 100.0;
 
             let procfs_status = match procfs.status() {
                 Ok(status) => status,
