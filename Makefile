@@ -10,6 +10,7 @@ build:
 	RUSTFLAGS=-Awarnings cargo build --release
 
 install:
+	rm -rf $(PREFIX)/bin/sentinel
 	cp $(BIN_PATH) $(PREFIX)/bin
 	cp c_code/exe/liblief_wrapper.so $(PREFIX)/lib
 	mkdir -p $(PREFIX)/share/sentinel
