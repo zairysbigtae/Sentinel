@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Environment=LD_LIBRARY_PATH=/usr/local/lib/
-ExecStart=/home/zai/rust_projects/sentinel/execstart.sh
+ExecStart=/usr/local/bin/sentinel-execstart.sh
 Restart=always
 Environment=RUST_LOG=info
 PIDFile=/run/sentinel.pid
